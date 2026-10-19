@@ -2,5 +2,5 @@ import csv
 PASSWORD ="TRY SOMETHING"
 
 
-for i in range:
+for i in rane:
   print(i)

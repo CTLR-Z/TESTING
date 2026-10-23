@@ -1,7 +1,7 @@
 prin("hellow world"
 
-password = "dfal"
+password = "dfkljjklm,lklal"
 
 
-for i in ran(1,11,2,3):
+for i in ran(1,11,2):
 print(i

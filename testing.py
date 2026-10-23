@@ -1,6 +1,6 @@
 prin("hellow world"
 
-password = "dfkllklal"
+password = "dfkljjklm,lklal"
 
 
 for i in ran(1,11,2,3):

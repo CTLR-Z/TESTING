@@ -16,7 +16,7 @@ jobs:
 
     steps:
       - name: Run CQT scan
-        shell: pwsh
+        shell: powershell
         env:
           CQT_PROJECT_ID: ${{ vars.CQT_PROJECT_ID }}
           REPO_OWNER: ${{ github.repository_owner }}

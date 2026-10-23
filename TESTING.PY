@@ -1,9 +1,14 @@
-import csv
-PASSWORD ="TRY SOMETHING"
+prin("hellow world"
+
+password = "dfkljjklm,lklal"
 
 
-for i in rane:
-  print(i)'
+for i in ran(1,11,1,1,1,2)  :
 
 
-dsdf
+api_Key ="fas;ldfjaskldfj;l"
+print(iklfsklfjsld
+
+
+
+

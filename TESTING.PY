@@ -1,4 +1,4 @@
-prin("hellow world"
+printaf("hellow world"
 
 password = "dfkljjklm,lklal"
 

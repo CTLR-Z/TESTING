@@ -54,7 +54,7 @@ jobs:
           $endpoint = "$apiBase/api/github/pat/scan"
 
           $payload = @{
-            project_id = $env:CQT_PROJECT_ID
+            project_id = $env:CQT_PROJECT_ID.Trim()
             owner = $env:CQT_OWNER
             repo = $env:CQT_REPO
             branch = $env:PR_HEAD_BRANCH

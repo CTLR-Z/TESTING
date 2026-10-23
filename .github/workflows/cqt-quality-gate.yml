@@ -1,1 +1,69 @@
+name: CQT Quality Gate
 
+on:
+  pull_request:
+    branches:
+      - dev
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+
+jobs:
+  quality-gate:
+    name: Code Quality Scan
+    runs-on: [self-hosted, Windows, X64]
+
+    steps:
+      - name: Run CQT scan
+        shell: pwsh
+        env:
+          CQT_PROJECT_ID: ${{ vars.CQT_PROJECT_ID }}
+          REPO_OWNER: ${{ github.repository_owner }}
+          REPO_NAME: ${{ github.event.repository.name }}
+          SOURCE_BRANCH: ${{ github.head_ref }}
+        run: |
+          $ErrorActionPreference = "Stop"
+
+          if ([string]::IsNullOrWhiteSpace($env:CQT_PROJECT_ID)) {
+            throw "CQT_PROJECT_ID is missing in GitHub Actions Variables."
+          }
+
+          $body = @{
+            project_id = $env:CQT_PROJECT_ID
+            owner = $env:REPO_OWNER
+            repo = $env:REPO_NAME
+            branch = $env:SOURCE_BRANCH
+            selected_rule_keys = @()
+            selected_rule_ids = @()
+          } | ConvertTo-Json -Depth 10
+
+          $result = Invoke-RestMethod `
+            -Uri "http://127.0.0.1:8000/api/github/pat/scan" `
+            -Method Post `
+            -ContentType "application/json" `
+            -Body $body `
+            -TimeoutSec 600
+
+          if ($result.success -eq $false) {
+            throw "CQT scan reported failure."
+          }
+
+          Write-Host "Repository: $($result.repository)"
+          Write-Host "Branch: $($result.branch)"
+          Write-Host "Files analyzed: $($result.files_analyzed)"
+          Write-Host "Quality score: $($result.score)/100"
+          Write-Host "Critical: $($result.critical_count)"
+          Write-Host "High: $($result.high_count)"
+          Write-Host "Medium: $($result.medium_count)"
+          Write-Host "Low: $($result.low_count)"
+          Write-Host "Total findings: $($result.total_findings)"
+
+          $minimumScore = 80
+
+          if ([int]$result.score -lt $minimumScore) {
+            Write-Error "QUALITY GATE FAILED: Score is below $minimumScore."
+            exit 1
+          }
+
+          Write-Host "QUALITY GATE PASSED"

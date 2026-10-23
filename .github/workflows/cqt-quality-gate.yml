@@ -33,38 +33,65 @@ jobs:
         run: |
           $ErrorActionPreference = "Stop"
 
-          if ([string]::IsNullOrWhiteSpace($env:CQT_API_URL)) {
+          # Validate API URL
+          $apiBase = $env:CQT_API_URL.Trim().TrimEnd("/")
+          if ([string]::IsNullOrWhiteSpace($apiBase)) {
             throw "Missing GitHub secret: CQT_API_URL"
           }
 
-          if ([string]::IsNullOrWhiteSpace($env:CQT_PROJECT_ID)) {
+          # Clean and validate project UUID
+          $projectId = $env:CQT_PROJECT_ID.Trim()
+          $parsedGuid = [guid]::Empty
+
+          if ([string]::IsNullOrWhiteSpace($projectId)) {
             throw "Missing GitHub secret: CQT_PROJECT_ID"
           }
 
+          if (-not [guid]::TryParse($projectId, [ref]$parsedGuid)) {
+            throw "CQT_PROJECT_ID is invalid. Update the GitHub Actions secret with the correct project UUID."
+          }
+
+          $projectId = $parsedGuid.ToString()
+
+          # Validate branch
+          $branch = $env:PR_HEAD_BRANCH.Trim()
+          if ([string]::IsNullOrWhiteSpace($branch)) {
+            throw "Pull request head branch is missing."
+          }
+
+          # Minimum score defaults to 80
           $minimumScore = 80
           if (-not [string]::IsNullOrWhiteSpace($env:CQT_MIN_SCORE)) {
             $parsedScore = 0
-            if (-not [int]::TryParse($env:CQT_MIN_SCORE, [ref]$parsedScore)) {
+            $scoreText = $env:CQT_MIN_SCORE.Trim()
+
+            if (-not [int]::TryParse($scoreText, [ref]$parsedScore)) {
               throw "CQT_MIN_SCORE must be an integer."
             }
+
+            if ($parsedScore -lt 0 -or $parsedScore -gt 100) {
+              throw "CQT_MIN_SCORE must be between 0 and 100."
+            }
+
             $minimumScore = $parsedScore
           }
 
-          $apiBase = $env:CQT_API_URL.TrimEnd("/")
           $endpoint = "$apiBase/api/github/pat/scan"
 
-          $payload = @{
-            project_id = $env:CQT_PROJECT_ID.Trim()
-            owner = $env:CQT_OWNER
-            repo = $env:CQT_REPO
-            branch = $env:PR_HEAD_BRANCH
+          $payloadObject = @{
+            project_id = $projectId
+            owner = $env:CQT_OWNER.Trim()
+            repo = $env:CQT_REPO.Trim()
+            branch = $branch
             selected_rule_keys = $null
             selected_rule_ids = @()
-          } | ConvertTo-Json -Depth 5
+          }
+
+          $payload = $payloadObject | ConvertTo-Json -Depth 5
 
           Write-Host "Starting CQT quality scan..."
-          Write-Host "Repository: $env:CQT_OWNER/$env:CQT_REPO"
-          Write-Host "Branch: $env:PR_HEAD_BRANCH"
+          Write-Host "Repository: $($env:CQT_OWNER)/$($env:CQT_REPO)"
+          Write-Host "Branch: $branch"
           Write-Host "Minimum required score: $minimumScore"
 
           try {
@@ -77,9 +104,11 @@ jobs:
           }
           catch {
             Write-Host "CQT API request failed."
+
             if ($_.ErrorDetails.Message) {
               Write-Host $_.ErrorDetails.Message
             }
+
             throw
           }
 
@@ -87,7 +116,11 @@ jobs:
             throw "CQT API response did not contain a score."
           }
 
-          $score = [int]$response.score
+          $score = 0
+          if (-not [int]::TryParse([string]$response.score, [ref]$score)) {
+            throw "CQT API returned an invalid score."
+          }
+
           $findings = if ($null -ne $response.total_findings) {
             $response.total_findings
           } else {

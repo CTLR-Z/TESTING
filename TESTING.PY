@@ -1,13 +1,8 @@
-printaf("hellow world"
+print("hellow world")
 
-password = "dfkljjklm,lklal"
-
-
-for i in ran(1,11,1,1,1,2)  :
+pass = "dfkljjklm,lklal"
 
 
-api_Key ="fas;ldfjaskldfj;l"
-print(iklfsklfjsld
 
 
 

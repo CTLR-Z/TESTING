@@ -7,6 +7,4 @@ if(score >= 90) {
 } else {
     console.log("Grade: C");
 }
-
-
 console.log("true")

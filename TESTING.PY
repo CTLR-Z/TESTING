@@ -1,9 +1,8 @@
-import csv
-PASSWORD ="TRY SOMETHING"
+print("hellow world")
+
+ 
 
 
-for i in rane:
-  print(i)'
 
 
-dsdf
+
